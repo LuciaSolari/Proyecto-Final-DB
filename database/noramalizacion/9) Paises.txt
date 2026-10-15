@@ -1,0 +1,46 @@
+-- ------------------------------------ --
+		-- CREAR TABLA:  --
+-- ------------------------------------ --
+CREATE TABLE shows_actores(
+	id_show INT NOT NULL,
+	id_actor INT NOT NULL,
+	
+	PRIMARY KEY(id_show,id_actor),
+	
+	FOREIGN KEY(id_show)
+	REFERENCES shows(id_show),
+	
+	FOREIGN KEY(id_actor)
+	REFERENCES actores(id_actor)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+SHOW TABLES;
+
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA:  --
+-- ------------------------------------ --
+INSERT INTO shows_actores(id_show, id_actor)
+SELECT DISTINCT
+	d.id_show,
+	a.id_actor
+FROM dataset AS d 
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.`CAST`,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_actor VARCHAR(100) PATH '$'
+	)
+) AS j
+JOIN actores AS a ON a.nombre_actor = TRIM(j.nombre_actor)
+WHERE TRIM(d.`CAST`) <> '' AND TRIM(j.nombre_actor) <> '';
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: --
+-- ------------------------------------ --
+SELECT * FROM shows_actores
+ORDER BY id_show;
+
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --

@@ -1,0 +1,46 @@
+-- ------------------------------------ --
+		-- CREAR TABLA:  --
+-- ------------------------------------ --
+CREATE TABLE shows_paises(
+	id_show INT NOT NULL,
+	id_pais INT NOT NULL,
+	
+	PRIMARY KEY(id_show,id_pais),
+	
+	FOREIGN KEY(id_show)
+	REFERENCES shows(id_show),
+	
+	FOREIGN KEY(id_pais)
+	REFERENCES paises(id_pais)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+SHOW TABLES;
+
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA:  --
+-- ------------------------------------ --
+INSERT INTO shows_paises(id_show, id_pais)
+SELECT DISTINCT
+	d.id_show,
+	p.id_pais
+FROM dataset AS d 
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.country,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_pais VARCHAR(100) PATH '$'
+	)
+) AS j
+JOIN paises AS p ON p.nombre_pais = TRIM(j.nombre_pais)
+WHERE TRIM(d.country) <> '' AND TRIM(j.nombre_pais) <> '';
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: --
+-- ------------------------------------ --
+SELECT * FROM shows_paises
+ORDER BY id_show;
+
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --

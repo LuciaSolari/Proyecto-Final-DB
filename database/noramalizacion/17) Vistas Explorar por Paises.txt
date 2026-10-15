@@ -1,0 +1,33 @@
+CREATE OR REPLACE VIEW vista_titulos_paises AS
+SELECT
+	s.id_show,
+	s.titulo,
+	t.tipo_de_show,
+	s.anio_salida,
+	p.nombre_pais
+FROM shows AS s
+JOIN tipos AS t
+	ON s.id_tipo = t.id_tipo
+JOIN shows_paises AS sp
+	ON s.id_show = sp.id_show
+JOIN paises AS p
+	ON sp.id_pais = p.id_pais;
+	
+-- ---------------------------------------
+-- Titulos por pais
+-- ---------------------------------------
+SELECT *
+FROM vista_titulos_paises
+WHERE nombre_pais = 'Argentina'
+ORDER BY titulo;
+
+-- ---------------------------------------
+-- Contar titulos por pais
+-- ---------------------------------------
+SELECT
+	nombre_pais,
+	COUNT(DISTINCT id_show) AS total_titulos
+FROM vista_titulos_paises
+GROUP BY nombre_pais
+ORDER BY total_titulos DESC
+LIMIT 10;

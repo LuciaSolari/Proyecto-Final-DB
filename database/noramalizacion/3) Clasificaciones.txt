@@ -1,0 +1,62 @@
+-- ------------------------------------ --
+		-- CREAR TABLA: CLASIFICACIONES --
+-- ------------------------------------ --
+CREATE TABLE clasificaciones(
+	id_clasificacion INT NOT NULL AUTO_INCREMENT,
+	clasificacion VARCHAR(20) NOT NULL,
+	
+	PRIMARY KEY(id_clasificacion)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA: CLASIFICACIONES --
+-- ------------------------------------ --
+INSERT INTO clasificaciones(clasificacion)
+SELECT DISTINCT rating FROM dataset
+WHERE rating <> '' AND rating NOT LIKE '%min%';
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: TODOS LOS RATINGS DEL DATASET CON DISTINCT--
+-- ------------------------------------ --
+SELECT DISTINCT rating FROM dataset;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: TODAS LAS CLASIFICACIONES DE DATASET, DESCARTANDO LAS VACIAS Y CON MINS--
+-- ------------------------------------ --
+SELECT DISTINCT rating FROM dataset
+WHERE rating <> '' AND rating NOT LIKE '%min%';
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: VECES QUE RATING APARECE VACIO EN EL DATASET (4)--
+-- ------------------------------------ --
+SELECT DISTINCT COUNT(*), rating FROM dataset
+WHERE rating = '';
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: CANTIDAD DE VECES QUE SE REPITEN LAS CATEGORIAS EN EL DATASET--
+-- ------------------------------------ --
+SELECT COUNT(*) AS apariciones, rating FROM dataset
+WHERE rating <> '' AND rating NOT LIKE '%min%'
+GROUP BY rating
+ORDER BY apariciones DESC;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: CANTIDAD DE APARICIONES REPETIDAS --
+-- ------------------------------------ --
+SELECT COUNT(*) AS apariciones FROM(
+SELECT rating FROM dataset
+WHERE rating <> '' AND rating NOT LIKE '%min%'
+) AS apariciones;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: TODO DE CLASIFICACIONES --
+-- ------------------------------------ --
+SELECT * FROM clasificaciones;
+
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --
+
+-- EN EL DATASET RATING TIENE 4 VECES VACIO Y 3 DATOS CON MINUTOS
+-- HAY 14 CLASIFICACIONES DISTINTAS EN TOTAL, 8800 EN EL DATASET (QUITANDO LAS VACIAS Y CORRUPTAS)

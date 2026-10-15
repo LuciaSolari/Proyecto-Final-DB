@@ -1,0 +1,18 @@
+CREATE VIEW vista_estadisticas_anuales AS
+SELECT
+	s.anio_salida,
+	t.tipo_de_show,
+	COUNT(*) AS total_titulos
+FROM shows AS s
+JOIN tipos AS t
+	ON s.id_tipo = t.id_tipo
+GROUP BY
+	s.anio_salida,
+	t.tipo_de_show;
+	
+-- ---------------------------------------
+-- Titulos por Por año
+-- ---------------------------------------
+SELECT *
+FROM vista_estadisticas_anuales
+ORDER BY total_titulos DESC;

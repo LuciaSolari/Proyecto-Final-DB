@@ -1,0 +1,57 @@
+CREATE VIEW super_consulta_2 AS
+SELECT
+    s.id_show,
+    t.tipo_de_show,
+    s.titulo,
+    d.directores,
+    a.actores,
+    p.paises,
+    s.fecha_aniadido,
+    s.anio_salida,
+    c.clasificacion,
+    s.duracion,
+    ca.categorias,
+    s.descripcion
+FROM shows AS s
+LEFT JOIN tipos AS t ON t.id_tipo = s.id_tipo
+LEFT JOIN clasificaciones AS c ON c.id_clasificacion = s.id_clasificacion
+LEFT JOIN (
+	SELECT
+		sd.id_show,
+      GROUP_CONCAT(d.nombre_director SEPARATOR ', ') AS directores
+   FROM shows_directores AS sd
+   JOIN directores AS d ON d.id_director = sd.id_director
+   GROUP BY sd.id_show
+) AS d ON d.id_show = s.id_show
+LEFT JOIN (
+   SELECT
+   	sa.id_show,
+      GROUP_CONCAT(a.nombre_actor SEPARATOR ', ') AS actores
+   FROM shows_actores AS sa
+   JOIN actores AS a ON a.id_actor = sa.id_actor
+   GROUP BY sa.id_show
+) AS a ON a.id_show = s.id_show
+LEFT JOIN (
+   SELECT
+   	sp.id_show,
+      GROUP_CONCAT(p.nombre_pais SEPARATOR ', ') AS paises
+   FROM shows_paises AS sp
+   JOIN paises AS p ON p.id_pais = sp.id_pais
+   GROUP BY sp.id_show
+) AS p ON p.id_show = s.id_show
+LEFT JOIN (
+   SELECT
+   	sca.id_show,
+      GROUP_CONCAT(ca.categoria SEPARATOR ', ') AS categorias
+   FROM shows_categorias AS sca
+   JOIN categorias AS ca ON ca.id_categoria = sca.id_categoria
+   GROUP BY sca.id_show
+) AS ca ON ca.id_show = s.id_show
+ORDER BY s.id_show;
+
+-- --------------------------------
+-- Detalle de un show
+-- --------------------------------
+SELECT *
+FROM super_consulta_2
+WHERE id_show = 1;
