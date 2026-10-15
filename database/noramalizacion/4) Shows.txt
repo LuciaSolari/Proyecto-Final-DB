@@ -1,0 +1,141 @@
+-- ------------------------------------ --
+		-- CREAR TABLA: SHOWS --
+-- ------------------------------------ --
+CREATE TABLE shows(
+	id_show INT NOT NULL AUTO_INCREMENT,
+	id_tipo INT NOT NULL,
+	titulo VARCHAR(150) NOT NULL,
+	fecha_aniadido TEXT NULL,
+	anio_salida INT NOT NULL,
+	id_clasificacion INT NULL,
+	duracion VARCHAR(20) NOT NULL,
+	descripcion VARCHAR(300) NOT NULL,
+	
+	PRIMARY KEY(id_show),
+	
+	FOREIGN KEY(id_tipo)
+	REFERENCES tipos (id_tipo),
+	
+	FOREIGN KEY(id_clasificacion)
+	REFERENCES clasificaciones (id_clasificacion)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA:  --
+-- ------------------------------------ --
+INSERT INTO shows(id_tipo,titulo,fecha_aniadido,anio_salida,id_clasificacion,duracion,descripcion)
+SELECT
+	t.id_tipo,
+	d.title,
+	d.date_added,
+	d.release_year,
+	c.id_clasificacion,
+	d.duration,
+	d.DESCRIPTION
+FROM dataset AS d
+JOIN tipos AS t ON t.tipo_de_show = d.type
+LEFT JOIN clasificaciones AS c ON c.clasificacion = d.rating;
+
+-- ------------------------------------ --
+-- CAMBIANDO EL FORMATO DE LA COLUMNA FECHA_ANIADIDO A DATE:  --
+-- ------------------------------------ --
+UPDATE shows
+SET fecha_aniadido = STR_TO_DATE(fecha_aniadido, '%M %d, %Y')
+WHERE fecha_aniadido IS NOT NULL AND fecha_aniadido <> '';
+
+ALTER TABLE shows MODIFY COLUMN fecha_aniadido TEXT NULL;
+
+UPDATE shows
+SET fecha_aniadido = NULL
+WHERE fecha_aniadido = '';
+
+ALTER TABLE shows
+MODIFY fecha_aniadido DATE;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: VER EL VALOR CON MAS CARACTERES EN LA TABLA DEL DATASET--
+-- ------------------------------------ --
+SELECT title FROM dataset
+WHERE CHAR_LENGTH(title) > 100;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: ID_SHOW + ID_TIPO + NOMBRE DEL TIPO SHOW--
+-- ------------------------------------ --
+SELECT
+	d.id_show,
+	t.id_tipo,
+	t.tipo_de_show
+FROM dataset AS d
+JOIN tipos AS t ON t.tipo_de_show = d.type;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: MUY PARECIDA A LA ORIGINAL--
+-- ------------------------------------ --
+SELECT
+	d.id_show,
+	t.tipo_de_show,
+	d.title,
+	d.date_added,
+	d.release_year,
+	c.clasificacion,
+	d.duration,
+	d.DESCRIPTION
+FROM dataset AS d
+JOIN tipos AS t ON t.tipo_de_show = d.type
+LEFT JOIN clasificaciones AS c ON c.clasificacion = d.rating;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: ver cantidad de veces que aparece anio_salidaL--
+-- ------------------------------------ --
+SELECT * FROM shows
+WHERE fecha_aniadido = '';
+
+SELECT COUNT(anio_salida) FROM shows;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: CHEQUEAR LAS CLASIFICACIONES EN DATASET QUE SEAN NULL--
+-- ------------------------------------ --
+SELECT d.id_show, d.rating
+FROM dataset AS d
+LEFT JOIN clasificaciones AS c ON c.clasificacion = d.rating
+WHERE c.id_clasificacion IS NULL;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: TODO DE SHOWS--
+-- ------------------------------------ --
+SELECT * FROM shows
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: VER LOS SHOWS CUYA FECHA_ANIADIDO SEA LA MAS VIEJA--
+-- ------------------------------------ --
+SELECT MIN(YEAR(fecha_aniadido)) FROM shows;
+
+SELECT * FROM shows
+WHERE YEAR(fecha_aniadido) = (
+	SELECT MIN(YEAR(fecha_aniadido))FROM shows
+);
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: PRUEBA DE SIMULACION AL DATASET ORIGINAL --
+-- ------------------------------------ --
+SELECT 
+	s.id_show,
+	t.tipo_de_show,
+	s.titulo,
+	d.id_director,
+	d.nombre_director,
+	s.fecha_aniadido, 
+	s.anio_salida,
+	c.clasificacion,
+	s.duracion,
+	s.descripcion
+FROM shows AS s
+LEFT JOIN shows_directores AS sd ON sd.id_show = s.id_show
+LEFT JOIN directores AS d ON d.id_director = sd.id_director
+LEFT JOIN tipos AS t ON t.id_tipo = s.id_tipo
+LEFT JOIN clasificaciones AS c ON c.id_clasificacion = s.id_clasificacion
+ORDER BY s.id_show;
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --

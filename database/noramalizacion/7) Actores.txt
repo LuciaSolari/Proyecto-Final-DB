@@ -1,0 +1,52 @@
+-- ------------------------------------ --
+		-- CREAR TABLA: ACOTRES --
+-- ------------------------------------ --
+CREATE TABLE actores(
+	id_actor INT NOT NULL AUTO_INCREMENT,
+	nombre_actor VARCHAR(100) NOT NULL,
+	
+	PRIMARY KEY(id_actor)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA: ACTORES --
+-- ------------------------------------ --
+INSERT INTO actores(nombre_actor)
+SELECT DISTINCT
+	TRIM(j.nombre_actor)
+FROM dataset AS d
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.`CAST`,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_actor VARCHAR(100) PATH '$'
+	)
+) AS j
+WHERE TRIM(d.`CAST`) <> '' AND TRIM(j.nombre_actor) <> ''
+AND TRIM(j.nombre_actor) NOT IN(
+	'Cast members of the "To All the Boys" films dish about the third movie and answer some fan questions',
+	'plus Whitney Cummings gives suspect dating advice.',
+	'Craig Robinson & The Nasty Delicious',
+	'Casting a light on the mistreatment of sea mammals',
+	'this documentary follows the plight of 18 Beluga whales kept in captivity for years.'
+);
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: TODO DE ACTORES --
+-- ------------------------------------ --
+SELECT * FROM actores
+-- WHERE id_actor IN (5110, 28776, 28775, 5111, 24182);
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: ACTORES CON TOTAL DE CARACTERES DESC --
+-- ------------------------------------ --
+SELECT id_actor, CHAR_LENGTH(nombre_actor) AS p FROM actores
+ORDER BY p DESC;
+
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --
+
+-- NOTA IMPORTANTE: ELIMINAR LOS IDS (5110, 28776, 28775, 5111, 24182) ¡LISTO! --

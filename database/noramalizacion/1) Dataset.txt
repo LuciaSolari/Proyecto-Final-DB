@@ -1,0 +1,67 @@
+-- DATOS ORIGINALES: show_id,type,title,director,cast,country,date_added,release_year,rating,duration,listed_in,description
+
+-- --------------------------------------------------
+-- Nueva base de datos limpia | proyectoFinalDB_v2
+-- --------------------------------------------------
+
+CREATE DATABASE proyectoFinalDB_v2;
+
+USE proyectoFinalDB_v2;
+
+-- ------------------------------------ --
+		-- CREAR LA TABLA DATASET --
+-- ------------------------------------ --
+CREATE TABLE dataset(
+   id_show INT AUTO_INCREMENT NOT NULL,
+   TYPE TEXT,
+	title TEXT NOT NULL,
+	director TEXT,
+	CAST TEXT,
+	country TEXT,
+	date_added TEXT,
+	release_year INT,
+	rating TEXT,
+	duration TEXT,
+	listed_in TEXT,
+	DESCRIPTION TEXT,
+	
+   PRIMARY KEY (id_show)
+) ENGINE=InnoDB
+DEFAULT CHARSET=UTF8MB4;
+
+-- ------------------------------------ --
+-- CARGAR LOS DATOS DEL CSV EN LA TABLA --
+-- ------------------------------------ --
+
+LOAD DATA INFILE
+'/var/lib/mysql-files/netflix_titles.csv'
+INTO TABLE dataset
+FIELDS TERMINATED BY ','
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS
+(
+   @id_show,
+   TYPE,
+   title,
+   director,
+   CAST,
+   country,
+   date_added,
+   release_year,
+   rating,
+   duration,
+   listed_in,
+   DESCRIPTION
+);
+
+-- ------------------------------------ --
+		-- CONSULTAS VARIAS: TODO --
+-- ------------------------------------ --
+SELECT * FROM dataset;
+
+-- ------------------------------------ --
+		-- ANOTACIONES --
+-- ------------------------------------ --
+
+-- HAY 8807 REGISTROS DE PELICULAS EN EL DATASET

@@ -1,0 +1,50 @@
+CREATE VIEW super_consulta AS
+SELECT 
+	s.id_show,
+	t.tipo_de_show,
+	s.titulo,
+	GROUP_CONCAT(
+		DISTINCT d.nombre_director
+   	-- ORDER BY d.nombre_director
+   	SEPARATOR ', '
+	) AS directores,
+   GROUP_CONCAT(
+		DISTINCT a.nombre_actor
+   	-- ORDER BY a.nombre_actor
+   	SEPARATOR ', '
+	) AS actores,
+	GROUP_CONCAT(
+		DISTINCT p.nombre_pais
+		SEPARATOR ', '
+	) AS paises,
+	s.fecha_aniadido, 
+	s.anio_salida,
+	c.clasificacion,
+	s.duracion,
+	GROUP_CONCAT(
+		DISTINCT ca.categoria
+		SEPARATOR ', '
+	),
+	s.descripcion
+FROM shows AS s
+LEFT JOIN shows_directores AS sd ON sd.id_show = s.id_show
+LEFT JOIN directores AS d ON d.id_director = sd.id_director
+LEFT JOIN tipos AS t ON t.id_tipo = s.id_tipo
+LEFT JOIN clasificaciones AS c ON c.id_clasificacion = s.id_clasificacion
+LEFT JOIN shows_actores AS sa ON sa.id_show = s.id_show
+LEFT JOIN actores AS a ON a.id_actor = sa.id_actor
+LEFT JOIN shows_paises AS sp ON sp.id_show = s.id_show
+LEFT JOIN paises AS p ON p.id_pais = sp.id_pais
+LEFT JOIN shows_categorias AS sca ON sca.id_show = s.id_show
+LEFT JOIN categorias AS ca ON ca.id_categoria = sca.id_categoria
+-- WHERE p.nombre_pais LIKE '%United%'
+GROUP BY
+	s.id_show,
+	t.tipo_de_show,
+	s.titulo,
+	s.fecha_aniadido,
+	s.anio_salida,
+	c.clasificacion,
+	s.duracion,
+	s.descripcion
+ORDER BY s.id_show;

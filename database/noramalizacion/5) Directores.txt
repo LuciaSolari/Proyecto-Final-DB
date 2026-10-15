@@ -1,0 +1,99 @@
+-- ------------------------------------ --
+		-- CREAR TABLA DIRECTORES --
+-- ------------------------------------ --
+CREATE TABLE directores(
+	id_director INT NOT NULL AUTO_INCREMENT,
+	nombre_director VARCHAR(100) NOT NULL,
+	
+	PRIMARY KEY(id_director)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA DIRECTORES --
+-- ------------------------------------ --
+INSERT INTO directores(nombre_director)
+SELECT DISTINCT 
+	TRIM(j.nombre_director) AS director
+FROM dataset AS d
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.director,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_director VARCHAR(100) PATH '$'
+	)
+)AS j
+WHERE TRIM(d.director) <> '' AND TRIM(j.nombre_director) <> '';
+-- AND TRIM(j.nombre_director) LIKE '%%';
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: CANTIDAD DE DIRECTORES VACIOS --
+-- ------------------------------------ --
+SELECT DISTINCT COUNT(*), director FROM dataset
+WHERE director = ''
+GROUP BY todo;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: CANTIDAD DE DIRECTORES UNICOS --
+-- PARA DIRECTORES REPETIDOS QUITAR EL DISTINCT
+-- ------------------------------------ --
+SELECT COUNT(*) AS cantidad_directores FROM(
+SELECT DISTINCT 
+	TRIM(j.nombre_director) AS director
+FROM dataset AS d
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.director,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_director VARCHAR(100) PATH '$'
+	)
+)AS j
+WHERE TRIM(d.director) <> '' AND TRIM(j.nombre_director) <> ''
+) AS directore;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: CANTIDAD DE APARICION DE DIRECTORES --
+-- ------------------------------------ --
+SELECT 
+	TRIM(j.nombre_director) AS director,
+	COUNT(*) AS apariciones
+FROM dataset AS d
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.director,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_director VARCHAR(100) PATH '$'
+	)
+)AS j
+WHERE TRIM(d.director) <> '' AND TRIM(j.nombre_director) <> ''
+GROUP BY TRIM(j.nombre_director)
+ORDER BY apariciones DESC;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: TODO DE DIRECTORES --
+-- ------------------------------------ --
+SELECT COUNT(*) FROM directores;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: directores cuyos nombres sean mayores a 20 caracteres --
+-- ------------------------------------ --
+SELECT nombre_director FROM directores
+WHERE CHAR_LENGTH(nombre_director) > 20;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: TODO DE DIRECTORES --
+-- ------------------------------------ --
+SELECT * FROM directores;
+
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --
+
+-- HAY 2634 DIRECTORES VACIOS EN DATASET
+-- NO HAY NULOS
+-- HAY 6762 DIRECTORES (ALGUNOS REPETIDOS)
+-- HAY 4814 DIRECTORES (INDIVIDUALES)
+-- EL DIRECTOR QUE MAS APARECIO FUE RAJIV CHILAKA (22)

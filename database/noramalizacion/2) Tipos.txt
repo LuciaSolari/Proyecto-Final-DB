@@ -1,0 +1,35 @@
+-- ------------------------------------ --
+		-- CREAR TABLA TIPOS --
+-- ------------------------------------ --
+CREATE TABLE tipos(
+	id_tipo INT NOT NULL AUTO_INCREMENT,
+	tipo_de_show VARCHAR(20) NOT NULL,
+	
+	PRIMARY KEY (id_tipo)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA TIPOS --
+-- ------------------------------------ --
+INSERT INTO tipos(tipo_de_show)
+SELECT DISTINCT
+	type
+FROM dataset;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: CANTIDADES POR TIPO --
+-- ------------------------------------ --
+SELECT COUNT(*),type FROM dataset
+GROUP BY TYPE;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: TODO DE TIPOS --
+-- ------------------------------------ --
+SELECT * FROM tipos;
+
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --
+
+-- HAY 6131 PELICULAS Y 2676 TV SHOWS

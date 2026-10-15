@@ -1,0 +1,48 @@
+-- ------------------------------------ --
+		-- CREAR TABLA: SHOWS_CATEGORIAS --
+-- ------------------------------------ --
+CREATE TABLE shows_categorias(
+	id_show INT NOT NULL,
+	id_categoria INT NOT NULL,
+	
+	PRIMARY KEY(id_show, id_categoria),
+	
+	FOREIGN KEY (id_show)
+	REFERENCES shows (id_show),
+	
+	FOREIGN KEY (id_categoria)
+	REFERENCES categorias (id_categoria)
+	
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+
+SHOW TABLES;
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA: SHOWS CATEGORIAS --
+-- ------------------------------------ --
+INSERT INTO shows_categorias(id_show,id_categoria)
+SELECT DISTINCT
+	d.id_show,
+	c.id_categoria
+FROM dataset AS d
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.listed_in,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_categoria VARCHAR(50) PATH '$'
+	)
+) AS j
+JOIN categorias AS c ON c.categoria = TRIM(j.nombre_categoria)
+WHERE TRIM(d.listed_in) <> '' AND TRIM(j.nombre_categoria) <> ''
+ORDER BY id_show;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: Todo Shows categorias --
+-- ------------------------------------ --
+SELECT * FROM shows_categorias
+ORDER BY id_show;
+
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --

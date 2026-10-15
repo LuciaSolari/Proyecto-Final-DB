@@ -1,0 +1,44 @@
+-- ------------------------------------ --
+		-- CREAR TABLA: SHOWS_DIRECTORES --
+-- ------------------------------------ --
+CREATE TABLE shows_directores(
+	id_show INT NOT NULL,
+	id_director INT NOT NULL,
+	
+	PRIMARY KEY(id_show,id_director),
+	
+	FOREIGN KEY(id_show)
+	REFERENCES shows(id_show),
+	
+	FOREIGN KEY(id_director)
+	REFERENCES directores(id_director)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+SHOW TABLES;
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA: SHOWS_DIRECTORES --
+-- ------------------------------------ --
+INSERT INTO shows_directores(id_show, id_director)
+SELECT DISTINCT
+	d.id_show,
+	di.id_director
+FROM dataset AS d 
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.director,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_director VARCHAR(100) PATH '$'
+	)
+) AS j
+JOIN directores AS di ON di.nombre_director = TRIM(j.nombre_director)
+WHERE TRIM(d.director) <> '' AND TRIM(j.nombre_director) <> '';
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: --
+-- ------------------------------------ --
+SELECT * FROM shows_directores;
+
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --

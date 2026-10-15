@@ -1,0 +1,32 @@
+CREATE OR REPLACE VIEW vista_titulos_categorias AS
+SELECT
+    s.id_show,
+    s.titulo,
+    t.tipo_de_show,
+    s.anio_salida,
+    ca.categoria
+FROM shows AS s
+JOIN tipos AS t
+    ON s.id_tipo = t.id_tipo
+JOIN shows_categorias AS sc
+    ON s.id_show = sc.id_show
+JOIN categorias AS ca
+    ON sc.id_categoria = ca.id_categoria;
+
+-- ---------------------------------------
+-- Titulos por categoria
+-- ---------------------------------------
+SELECT *
+FROM vista_titulos_categorias
+WHERE categoria = 'Documentaries'
+ORDER BY titulo;
+
+-- ---------------------------------------
+-- Contar titulos por categoria
+-- ---------------------------------------
+SELECT
+	categoria,
+	COUNT(DISTINCT id_show) AS total_titulos
+FROM vista_titulos_categorias
+GROUP BY categoria
+ORDER BY total_titulos DESC;

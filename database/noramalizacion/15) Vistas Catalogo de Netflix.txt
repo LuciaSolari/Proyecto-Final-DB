@@ -1,0 +1,21 @@
+CREATE VIEW vista_catalogo_netflix AS
+SELECT
+	s.id_show,
+	s.titulo,
+	t.tipo_de_show,
+	s.anio_salida,
+	s.duracion,
+	c.clasificacion,
+	s.fecha_aniadido
+FROM shows AS s
+LEFT JOIN tipos AS t
+	ON s.id_tipo = t.id_tipo
+LEFT JOIN clasificaciones AS c
+	ON s.id_clasificacion = c.id_clasificacion;
+
+-- ---------------------------------------------
+-- Buscar por titulo
+-- ---------------------------------------------
+SELECT *
+FROM vista_catalogo_netflix
+WHERE titulo LIKE '%Dark%';

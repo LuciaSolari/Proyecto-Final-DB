@@ -1,0 +1,53 @@
+-- ------------------------------------ --
+		-- CREAR TABLA: CATEGORIAS --
+-- ------------------------------------ --
+CREATE TABLE categorias(
+	id_categoria INT NOT NULL AUTO_INCREMENT,
+	categoria VARCHAR(50) NOT NULL,
+	
+	PRIMARY KEY(id_categoria)
+)ENGINE=INNODB
+DEFAULT CHARSET=UTF8MB4;
+
+-- ------------------------------------ --
+		-- INSERTS EN LA TABLA: CATEGORIAS --
+-- ------------------------------------ --
+INSERT INTO categorias(categoria)
+SELECT DISTINCT
+	TRIM(j.nombre_categoria)
+FROM dataset AS d
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.listed_in,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_categoria VARCHAR(50) PATH '$'
+	)
+) AS j
+WHERE TRIM(d.listed_in) <> '' AND TRIM(j.nombre_categoria) <> '';
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: VER LA CANTIDAD DE CARACTERES DE DE LAS CATEGORIAS EN DATASET --
+-- ------------------------------------ --
+SELECT * FROM categorias;
+
+-- ------------------------------------ --
+-- CONSULTAS VARIAS: VER LA CANTIDAD DE CARACTERES DE DE LAS CATEGORIAS EN DATASET --
+-- ------------------------------------ --
+SELECT DISTINCT
+	CHAR_LENGTH(j.nombre_categoria) AS Caracteres,
+	TRIM(j.nombre_categoria) AS Categoria
+FROM dataset AS d
+JOIN JSON_TABLE(
+	CONCAT(
+		'["',REPLACE(REPLACE(d.listed_in,'"','\\"'),', ','","'),'"]'
+	),
+	'$[*]' COLUMNS(
+		nombre_categoria VARCHAR(50) PATH '$'
+	)
+) AS j
+WHERE TRIM(d.listed_in) <> '' AND TRIM(j.nombre_categoria) <> ''
+ORDER BY Caracteres DESC;
+-- ------------------------------------ --
+-- ANOTACIONES VARIAS: --
+-- ------------------------------------ --
