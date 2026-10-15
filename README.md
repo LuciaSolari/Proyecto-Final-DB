@@ -1,651 +1,382 @@
-# TRABAJO FINAL DE BASE DE DATOS Y DE GESTIÓN DE PROYECTOS DE SOFTWARE #
-
-# ESCUELA SUPERIOR DE COMERCIO Nº 43 #
-
-# CARRERA: TÉCNICO SUPERIOR EN DESARROLLO DE SOFTWARE #
-
-# PROFESORES: ARIEL NARDELLI, MATIAS NARDELLI, ELIANA SULIGOY #
-
-# ALUMNOS: OMAR OJEDA, LUCÍA SOLARI #
-
-## EL CVS QUE ELEGIMOS FUE UN DATASET DE PELÍCULAS Y SERIES DE NETFLIX ##
-## El dataset que elegimos tiene más de 8.000 registros de películas y series, las tablas que el dataset original tenía eran:
-## show_id, type, title, director, cast, country, date_added, release_year, rating, duration, listen_in y description. 
-## Íbamos viendo cuáles podíamos agrupar y normalizar, también en vez de dejarlas en inglés, las cambiamos a español.
-
-#** DIAGRAMA ER **#
-
-
-** CÓDIGO UTILIZADO PARA LA NORMALIZACIÓN **
-
-### Reemplazar en un documento de texto el archivo exportado para que a la hora de importar no haya muchos problemas.
-### Reemplazar todos: utf8mb4_0900_ai_ci
-### Por: utf8mb4_unicode_ci
-
-** CONSULTAS REALIZADAS **
-
-####-- --------------------------------------------------
-####-- Nueva base de datos limpia | proyectoFinalDB_v2
-####-- --------------------------------------------------
-#### CREATE DATABASE proyectoFinalDB_v2;
-#### USE proyectoFinalDB_v2;
-####
-####-- ------------------------------------ --
-####		-- CREAR LA TABLA DATASET --
-####-- ------------------------------------ --
-#### CREATE TABLE dataset(
-####  id_show INT AUTO_INCREMENT NOT NULL,
-####  TYPE TEXT,
-####	title TEXT NOT NULL,
-####	director TEXT,
-####	CAST TEXT,
-####	country TEXT,
-####	date_added TEXT,
-####	release_year INT,
-####	rating TEXT,
-####	duration TEXT,
-####	listed_in TEXT,
-####	DESCRIPTION TEXT,
-####   PRIMARY KEY (id_show)
-#### ) ENGINE=InnoDB
-#### DEFAULT CHARSET=UTF8MB4;
-
-####-- ------------------------------------ --
-####-- CARGAR LOS DATOS DEL CSV EN LA TABLA --
-####-- ------------------------------------ --
-#### LOAD DATA INFILE
-#### '/var/lib/mysql-files/netflix_titles.csv'
-#### INTO TABLE dataset
-#### FIELDS TERMINATED BY ','
-#### OPTIONALLY ENCLOSED BY '"'
-#### LINES TERMINATED BY '\n'
-#### IGNORE 1 ROWS
-#### (
-####   @id_show,
-####   TYPE,
-####   title,
-####   director,
-####   CAST,
-####   country,
-####   date_added,
-####   release_year,
-####   rating,
-####   duration,
-####   listed_in,
-####   DESCRIPTION
-#### );
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO --
-####-- ------------------------------------ --
-#### SELECT * FROM dataset;
-
-####-- ------------------------------------ --
-####		-- ANOTACIONES --
-####-- ------------------------------------ --
-####-- HAY 8807 REGISTROS DE PELICULAS EN EL DATASET
-
-####-- ------------------------------------ --
-####		-- CREAR TABLA TIPOS --
-####-- ------------------------------------ --
-#### CREATE TABLE tipos(
-####	id_tipo INT NOT NULL AUTO_INCREMENT,
-####	tipo_de_show VARCHAR(20) NOT NULL,	
-####	  PRIMARY KEY (id_tipo)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-
-####-- ------------------------------------ --
-####		-- INSERTS EN LA TABLA TIPOS --
-####-- ------------------------------------ --
-#### INSERT INTO tipos(tipo_de_show)
-#### SELECT DISTINCT
-####	type
-#### FROM dataset;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: CANTIDADES POR TIPO --
-####-- ------------------------------------ --
-#### SELECT COUNT(*),type FROM dataset
-#### GROUP BY TYPE;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO DE TIPOS --
-####-- ------------------------------------ --
-#### SELECT * FROM tipos;
-
-####-- ------------------------------------ --
-####-- ANOTACIONES VARIAS: --
-####-- ------------------------------------ --
-#### HAY 6131 PELICULAS Y 2676 TV SHOWS
-
-####-- ------------------------------------ --
-####-- CREAR TABLA: CLASIFICACIONES --
-####-- ------------------------------------ --
-#### CREATE TABLE clasificaciones(
-####	id_clasificacion INT NOT NULL AUTO_INCREMENT,
-####	clasificacion VARCHAR(20) NOT NULL,
-####		PRIMARY KEY(id_clasificacion)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-
-####-- ------------------------------------ --
-####-- INSERTS EN LA TABLA: CLASIFICACIONES --
-####-- ------------------------------------ --
-#### INSERT INTO clasificaciones(clasificacion)
-#### SELECT DISTINCT rating FROM dataset
-#### WHERE rating <> '' AND rating NOT LIKE '%min%';
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODOS LOS RATINGS DEL DATASET CON DISTINCT--
-####-- ------------------------------------ --
-#### SELECT DISTINCT rating FROM dataset;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODAS LAS CLASIFICACIONES DE DATASET, DESCARTANDO LAS VACIAS Y CON MINS--
-####-- ------------------------------------ --
-#### SELECT DISTINCT rating FROM dataset
-#### WHERE rating <> '' AND rating NOT LIKE '%min%';
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: VECES QUE RATING APARECE VACIO EN EL DATASET (4)--
-####-- ------------------------------------ --
-#### SELECT DISTINCT COUNT(*), rating FROM dataset
-#### WHERE rating = '';
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: CANTIDAD DE VECES QUE SE REPITEN LAS CATEGORIAS EN EL DATASET--
-####-- ------------------------------------ --
-#### SELECT COUNT(*) AS apariciones, rating FROM dataset
-#### WHERE rating <> '' AND rating NOT LIKE '%min%'
-#### GROUP BY rating
-#### ORDER BY apariciones DESC;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: CANTIDAD DE APARICIONES REPETIDAS --
-####-- ------------------------------------ --
-#### SELECT COUNT(*) AS apariciones FROM(
-#### SELECT rating FROM dataset
-#### WHERE rating <> '' AND rating NOT LIKE '%min%'
-#### ) AS apariciones;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO DE CLASIFICACIONES --
-####-- ------------------------------------ --
-#### SELECT * FROM clasificaciones;
-
-####-- ------------------------------------ --
-####-- ANOTACIONES VARIAS: --
-####-- ------------------------------------ --
-#### EN EL DATASET RATING TIENE 4 VECES VACIO Y 3 DATOS CON MINUTOS
-#### HAY 14 CLASIFICACIONES DISTINTAS EN TOTAL, 8800 EN EL DATASET (QUITANDO LAS VACIAS Y CORRUPTAS)
-
-####-- ------------------------------------ --
-####		-- CREAR TABLA: SHOWS --
-####-- ------------------------------------ --
-#### CREATE TABLE shows(
-####	id_show INT NOT NULL AUTO_INCREMENT,
-####	id_tipo INT NOT NULL,
-####	titulo VARCHAR(150) NOT NULL,
-####	fecha_aniadido TEXT NULL,
-####	anio_salida INT NOT NULL,
-####	id_clasificacion INT NULL,
-####	duracion VARCHAR(20) NOT NULL,
-####	descripcion VARCHAR(300) NOT NULL,
-####		PRIMARY KEY(id_show),
-####		FOREIGN KEY(id_tipo)
-####	REFERENCES tipos (id_tipo),
-####  FOREIGN KEY(id_clasificacion)
-####  REFERENCES clasificaciones (id_clasificacion)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-
-####-- ------------------------------------ --
-####-- INSERTS EN LA TABLA:  --
-####-- ------------------------------------ --
-#### INSERT INTO shows(id_tipo,titulo,fecha_aniadido,anio_salida,id_clasificacion,duracion,descripcion)
-#### SELECT
-####	t.id_tipo,
-####	d.title,
-####	d.date_added,
-####	d.release_year,
-####	c.id_clasificacion,
-####	d.duration,
-####	d.DESCRIPTION
-#### FROM dataset AS d
-#### JOIN tipos AS t ON t.tipo_de_show = d.type
-#### LEFT JOIN clasificaciones AS c ON c.clasificacion = d.rating;
-
-####-- ------------------------------------ --
-####-- CAMBIANDO EL FORMATO DE LA COLUMNA FECHA_ANIADIDO A DATE:  --
-####-- ------------------------------------ --
-#### UPDATE shows
-#### SET fecha_aniadido = STR_TO_DATE(fecha_aniadido, '%M %d, %Y')
-#### WHERE fecha_aniadido IS NOT NULL AND fecha_aniadido <> '';
-
-#### ALTER TABLE shows MODIFY COLUMN fecha_aniadido TEXT NULL;
-
-#### UPDATE shows
-#### SET fecha_aniadido = NULL
-#### WHERE fecha_aniadido = '';
-
-#### ALTER TABLE shows
-#### MODIFY fecha_aniadido DATE;
-
-#### -- ------------------------------------ --
-####-- CONSULTAS VARIAS: VER EL VALOR CON MAS CARACTERES EN LA TABLA DEL DATASET--
-####-- ------------------------------------ --
-#### SELECT title FROM dataset
-#### WHERE CHAR_LENGTH(title) > 100;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: ID_SHOW + ID_TIPO + NOMBRE DEL TIPO SHOW--
-####-- ------------------------------------ --
-#### SELECT
-####	d.id_show,
-####	t.id_tipo,
-####	t.tipo_de_show
-#### FROM dataset AS d
-#### JOIN tipos AS t ON t.tipo_de_show = d.type;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: MUY PARECIDA A LA ORIGINAL--
-####-- ------------------------------------ --
-#### SELECT
-####	d.id_show,
-####	t.tipo_de_show,
-####	d.title,
-####	d.date_added,
-####	d.release_year,
-####	c.clasificacion,
-####	d.duration,
-####	d.DESCRIPTION
-#### FROM dataset AS d
-#### JOIN tipos AS t ON t.tipo_de_show = d.type
-#### LEFT JOIN clasificaciones AS c ON c.clasificacion = d.rating;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: ver cantidad de veces que aparece anio_salidaL--
-####-- ------------------------------------ --
-#### SELECT * FROM shows
-#### WHERE fecha_aniadido = '';
-
-#### SELECT COUNT(anio_salida) FROM shows;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: CHEQUEAR LAS CLASIFICACIONES EN DATASET QUE SEAN NULL--
-####-- ------------------------------------ --
-#### SELECT d.id_show, d.rating
-#### FROM dataset AS d
-#### LEFT JOIN clasificaciones AS c ON c.clasificacion = d.rating
-#### WHERE c.id_clasificacion IS NULL;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO DE SHOWS--
-####-- ------------------------------------ --
-#### SELECT * FROM shows
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: VER LOS SHOWS CUYA FECHA_ANIADIDO SEA LA MAS VIEJA--
-####-- ------------------------------------ --
-#### SELECT MIN(YEAR(fecha_aniadido)) FROM shows;
-
-#### SELECT * FROM shows
-#### WHERE YEAR(fecha_aniadido) = (
-####	SELECT MIN(YEAR(fecha_aniadido))FROM shows
-#### );
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: PRUEBA DE SIMULACION AL DATASET ORIGINAL --
-####-- ------------------------------------ --
-#### SELECT 
-####	s.id_show,
-####	t.tipo_de_show,
-####	s.titulo,
-####	d.id_director,
-####	d.nombre_director,
-####	s.fecha_aniadido, 
-####	s.anio_salida,
-####	c.clasificacion,
-####	s.duracion,
-####	s.descripcion
-#### FROM shows AS s
-#### LEFT JOIN shows_directores AS sd ON sd.id_show = s.id_show
-#### LEFT JOIN directores AS d ON d.id_director = sd.id_director
-#### LEFT JOIN tipos AS t ON t.id_tipo = s.id_tipo
-#### LEFT JOIN clasificaciones AS c ON c.id_clasificacion = s.id_clasificacion
-#### ORDER BY s.id_show;
-
-####-- ------------------------------------ --
-####-- CREAR TABLA DIRECTORES --
-####-- ------------------------------------ --
-#### CREATE TABLE directores(
-#### 	id_director INT NOT NULL AUTO_INCREMENT,
-#### 	nombre_director VARCHAR(100) NOT NULL,
-####	PRIMARY KEY(id_director)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-
-####-- ------------------------------------ --
-####-- INSERTS EN LA TABLA DIRECTORES --
-####-- ------------------------------------ --
-#### INSERT INTO directores(nombre_director)
-#### SELECT DISTINCT 
-####	TRIM(j.nombre_director) AS director
-#### FROM dataset AS d
-#### JOIN JSON_TABLE(
-####	CONCAT(
-####		'["',REPLACE(REPLACE(d.director,'"','\\"'),', ','","'),'"]'
-####	),
-####	'$[*]' COLUMNS(
-####		nombre_director VARCHAR(100) PATH '$'
-####	)
-#### )AS j
-#### WHERE TRIM(d.director) <> '' AND TRIM(j.nombre_director) <> '';
-####-- AND TRIM(j.nombre_director) LIKE '%%';
-####-- CONSULTAS VARIAS: CANTIDAD DE DIRECTORES UNICOS --
-####-- PARA DIRECTORES REPETIDOS QUITAR EL DISTINCT
-
-#### SELECT COUNT(*) AS cantidad_directores FROM(
-#### SELECT DISTINCT 
-####	TRIM(j.nombre_director) AS director
-####-- ----------------------------------------------- --
-####-- CONSULTAS VARIAS: CANTIDAD DE DIRECTORES VACIOS --
-####-- ----------------------------------------------- --
-#### SELECT DISTINCT COUNT(*), director FROM dataset
-#### WHERE director = ''
-#### GROUP BY todo;
-
-#### FROM dataset AS d
-#### JOIN JSON_TABLE(
-####	CONCAT(
-####		'["',REPLACE(REPLACE(d.director,'"','\\"'),', ','","'),'"]'
-####	),
-####	'$[*]' COLUMNS(
-####		nombre_director VARCHAR(100) PATH '$'
-####	)
-#### )AS j
-#### WHERE TRIM(d.director) <> '' AND TRIM(j.nombre_director) <> ''
-#### ) AS directore;
-
-####-- ----------------------------------------------------- --
-####-- CONSULTAS VARIAS: CANTIDAD DE APARICION DE DIRECTORES --
-####-- ----------------------------------------------------- --
-#### SELECT 
-####	TRIM(j.nombre_director) AS director,
-####	COUNT(*) AS apariciones
-#### FROM dataset AS d
-#### JOIN JSON_TABLE(
-####	CONCAT(
-####		'["',REPLACE(REPLACE(d.director,'"','\\"'),', ','","'),'"]'
-####	),
-####	'$[*]' COLUMNS(
-####		nombre_director VARCHAR(100) PATH '$'
-####	)
-#### )AS j
-#### WHERE TRIM(d.director) <> '' AND TRIM(j.nombre_director) <> ''
-#### GROUP BY TRIM(j.nombre_director)
-#### ORDER BY apariciones DESC;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO DE DIRECTORES --
-####-- ------------------------------------ --
-#### SELECT COUNT(*) FROM directores;
-
-####-- ----------------------------------------------------------------------- --
-####-- CONSULTAS VARIAS: directores cuyos nombres sean mayores a 20 caracteres --
-####-- ----------------------------------------------------------------------- --
-#### SELECT nombre_director FROM directores
-#### WHERE CHAR_LENGTH(nombre_director) > 20;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO DE DIRECTORES --
-####-- ------------------------------------ --
-#### SELECT * FROM directores;
-
-####-- ------------------------------------ --
-####-- ANOTACIONES VARIAS: --
-####-- ------------------------------------ --
-####-- HAY 2634 DIRECTORES VACIOS EN DATASET
-####-- NO HAY NULOS
-####-- HAY 6762 DIRECTORES (ALGUNOS REPETIDOS)
-####-- HAY 4814 DIRECTORES (INDIVIDUALES)
-####-- EL DIRECTOR QUE MAS APARECIO FUE RAJIV CHILAKA (22)
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO DE DIRECTORES --
-####-- ------------------------------------ --
-#### SELECT COUNT(*) FROM directores;
-
-####-- ----------------------------------------------------------------------- --
-####-- CONSULTAS VARIAS: directores cuyos nombres sean mayores a 20 caracteres --
-####-- ----------------------------------------------------------------------- --
-#### SELECT nombre_director FROM directores
-#### WHERE CHAR_LENGTH(nombre_director) > 20;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO DE DIRECTORES --
-####-- ------------------------------------ --
-#### SELECT * FROM directores;
-
-####-- ------------------------------------ --
-####-- ANOTACIONES VARIAS: --
-####-- ------------------------------------ --
-####-- HAY 2634 DIRECTORES VACIOS EN DATASET
-####-- NO HAY NULOS
-####-- HAY 6762 DIRECTORES (ALGUNOS REPETIDOS)
-####-- HAY 4814 DIRECTORES (INDIVIDUALES)
-####-- EL DIRECTOR QUE MAS APARECIO FUE RAJIV CHILAKA (22)
-
-####-- ----------------------------- --
-####-- CREAR TABLA: SHOWS_DIRECTORES --
-####-- ----------------------------- --
-#### CREATE TABLE shows_directores(
-####	id_show INT NOT NULL,
-####	id_director INT NOT NULL,
-####	PRIMARY KEY(id_show,id_director),
-#### FOREIGN KEY(id_show)
-#### REFERENCES shows(id_show),
-#### FOREIGN KEY(id_director)
-####	REFERENCES directores(id_director)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-#### SHOW TABLES;
-
-####-- ------------------------------------- --
-####-- INSERTS EN LA TABLA: SHOWS_DIRECTORES --
-####-- ------------------------------------- --
-#### INSERT INTO shows_directores(id_show, id_director)
-#### SELECT DISTINCT
-####	d.id_show,
-####	di.id_director
-#### FROM dataset AS d 
-#### JOIN JSON_TABLE(
-#### 	CONCAT(
-####		'["',REPLACE(REPLACE(d.director,'"','\\"'),', ','","'),'"]'
-####	),
-####	'$[*]' COLUMNS(
-####		nombre_director VARCHAR(100) PATH '$'
-####	)
-#### ) AS j
-#### JOIN directores AS di ON di.nombre_director = TRIM(j.nombre_director)
-#### WHERE TRIM(d.director) <> '' AND TRIM(j.nombre_director) <> '';
-
-####-- -------------------- --
-####-- CREAR TABLA: ACTORES --
-####-- -------------------- --
-#### CREATE TABLE actores(
-####	id_actor INT NOT NULL AUTO_INCREMENT,
-####	nombre_actor VARCHAR(100) NOT NULL,
-	
-####	PRIMARY KEY(id_actor)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-
-####-- ---------------------------- --
-####-- INSERTS EN LA TABLA: ACTORES --
-####-- ---------------------------- --
-#### INSERT INTO actores(nombre_actor)
-#### SELECT DISTINCT
-#### 	TRIM(j.nombre_actor)
-#### FROM dataset AS d
-#### JOIN JSON_TABLE(
-####	CONCAT(
-####		'["',REPLACE(REPLACE(d.`CAST`,'"','\\"'),', ','","'),'"]'
-####	),
-####	'$[*]' COLUMNS(
-####		nombre_actor VARCHAR(100) PATH '$'
-####	)
-#### ) AS j
-#### WHERE TRIM(d.`CAST`) <> '' AND TRIM(j.nombre_actor) <> ''
-#### AND TRIM(j.nombre_actor) NOT IN(
-####	'Cast members of the "To All the Boys" films dish about the third movie and answer some fan questions',
-####	'plus Whitney Cummings gives suspect dating advice.',
-####	'Craig Robinson & The Nasty Delicious',
-####	'Casting a light on the mistreatment of sea mammals',
-####	'this documentary follows the plight of 18 Beluga whales kept in captivity for years.'
-#### );
-
-####-- --------------------------- --
-####-- CREAR TABLA SHOWS_ACTORES:  --
-####-- ------------- ------------- --
-#### CREATE TABLE shows_actores(
-####	id_show INT NOT NULL,
-####	id_actor INT NOT NULL,
-####		PRIMARY KEY(id_show,id_actor),
-####	FOREIGN KEY(id_show)
-####	REFERENCES shows(id_show),
-#### FOREIGN KEY(id_actor)
-####	REFERENCES actores(id_actor)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-#### SHOW TABLES;
-
-####-- ------------------------------------ --
-####-- INSERTS EN LA TABLA SHOWS_ACTORES:  --
-####-- ------------------------------------ --
-#### INSERT INTO shows_actores(id_show, id_actor)
-#### SELECT DISTINCT
-####	d.id_show,
-####	a.id_actor
-#### FROM dataset AS d 
-#### JOIN JSON_TABLE(
-####	CONCAT(
-####		'["',REPLACE(REPLACE(d.`CAST`,'"','\\"'),', ','","'),'"]'
-####	),
-####	'$[*]' COLUMNS(
-####		nombre_actor VARCHAR(100) PATH '$'
-####	)
-#### ) AS j
-#### JOIN actores AS a ON a.nombre_actor = TRIM(j.nombre_actor)
-#### WHERE TRIM(d.`CAST`) <> '' AND TRIM(j.nombre_actor) <> '';
-
-####-- ----------------- --
-####-- CONSULTAS VARIAS: --
-####-- ----------------- --
-#### SELECT * FROM shows_actores
-#### ORDER BY id_show;
-
-####-- ------------------------------------ --
-####-- CONSULTAS VARIAS: TODO DE ACTORES --
-####-- ------------------------------------ --
-#### SELECT * FROM actores
-#### -- WHERE id_actor IN (5110, 28776, 28775, 5111, 24182);
-
-####-- ------------------------------------------------------ --
-####-- CONSULTAS VARIAS: ACTORES CON TOTAL DE CARACTERES DESC --
-####-- ------------------------------------------------------ --
-#### SELECT id_actor, CHAR_LENGTH(nombre_actor) AS p FROM actores
-#### ORDER BY p DESC;
-
-####-- ----------------- --
-####-- CONSULTAS VARIAS: --
-####-- ------------------ --
-#### SELECT * FROM shows_directores;
-
-####-- ------------------------------------ --
-####-- CREAR TABLA SHOWS_PAISES:  --
-####-- ------------------------------------ --
-#### CREATE TABLE shows_paises(
-####	id_show INT NOT NULL,
-####	id_pais INT NOT NULL,
-####	PRIMARY KEY(id_show,id_pais),	
-####	FOREIGN KEY(id_show)
-####	REFERENCES shows(id_show),
-#### FOREIGN KEY(id_pais)
-####	REFERENCES paises(id_pais)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-#### SHOW TABLES;
-
-####-- ---------------------------------- --
-####-- INSERTS EN LA TABLA SHOWS_PAISES:  --
-####-- ---------------------------------- --
-#### INSERT INTO shows_paises(id_show, id_pais)
-#### SELECT DISTINCT
-####	d.id_show,
-####	p.id_pais
-#### FROM dataset AS d 
-#### JOIN JSON_TABLE(
-####	CONCAT(
-####		'["',REPLACE(REPLACE(d.country,'"','\\"'),', ','","'),'"]'
-####	),
-####	'$[*]' COLUMNS(
-####		nombre_pais VARCHAR(100) PATH '$'
-####	)
-#### ) AS j
-#### JOIN paises AS p ON p.nombre_pais = TRIM(j.nombre_pais)
-#### WHERE TRIM(d.country) <> '' AND TRIM(j.nombre_pais) <> '';
-
-####-- ----------------------------- --
-####-- CREAR TABLA: SHOWS_CATEGORIAS --
-####-- ----------------------------- --
-#### CREATE TABLE shows_categorias(
-####	id_show INT NOT NULL,
-####	id_categoria INT NOT NULL,
-#### PRIMARY KEY(id_show, id_categoria),
-####	FOREIGN KEY (id_show)
-####	REFERENCES shows (id_show),	
-####	FOREIGN KEY (id_categoria)
-####	REFERENCES categorias (id_categoria)
-#### )ENGINE=INNODB
-#### DEFAULT CHARSET=UTF8MB4;
-#### SHOW TABLES;
-
-####-- ------------------------------------ --
-####-- INSERTS EN LA TABLA: SHOWS CATEGORIAS --
-####-- ------------------------------------ --
-#### INSERT INTO shows_categorias(id_show,id_categoria)
-#### SELECT DISTINCT
-####	d.id_show,
-####	c.id_categoria
-#### FROM dataset AS d
-#### JOIN JSON_TABLE(
-####	CONCAT(
-####		'["',REPLACE(REPLACE(d.listed_in,'"','\\"'),', ','","'),'"]'
-####	),
-####	'$[*]' COLUMNS(
-####		nombre_categoria VARCHAR(50) PATH '$'
-####	)
-#### ) AS j
-#### JOIN categorias AS c ON c.categoria = TRIM(j.nombre_categoria)
-#### WHERE TRIM(d.listed_in) <> '' AND TRIM(j.nombre_categoria) <> ''
-#### ORDER BY id_show;
-
--- ------------------------------------ --
--- CONSULTAS VARIAS: Todo Shows categorias --
--- ------------------------------------ --
-SELECT * FROM shows_categorias
-ORDER BY id_show;
+# Trabajo Final de Base de Datos y Gestión de Proyectos de Software
 
+**Institución:** Escuela Superior de Comercio N.º 43  
+**Carrera:** Técnico Superior en Desarrollo de Software  
+**Profesores:** Ariel Nardelli, Matías Nardelli y Eliana Suligoy  
+**Integrantes:** Omar Ojeda y Lucía Solari
 
+---
 
+## 1. ¿En qué consiste la base de datos?
 
+El proyecto consiste en diseñar y normalizar una base de datos a partir de un *dataset* de películas y series de Netflix. El archivo original contiene **8.807 registros** y campos como tipo, título, director, reparto, país, fecha de incorporación, año de lanzamiento, clasificación, duración, categorías y descripción.
 
+En una primera etapa, los datos se cargaron en una tabla temporal llamada `dataset`. Luego se analizaron los campos y se reorganizó la información en tablas relacionadas para reducir la repetición de datos y representar correctamente las relaciones entre títulos, directores, actores, países y categorías.
 
+La base de datos final se llama `proyectoFinalDB_v2` y permite consultar el catálogo, busca``r títulos y obtener información agrupada y estadísticas.
 
+### Tablas principales
 
+- `shows`: información principal de cada película o serie.
+- `tipos`: tipos de contenido, por ejemplo, película o serie.
+- `clasificaciones`: clasificaciones por edad.
+- `directores` y `shows_directores`: directores y su relación con los títulos.
+- `actores` y `shows_actores`: actores y su relación con los títulos.
+- `paises` y `shows_paises`: países asociados a cada título.
+- `categorias` y `shows_categorias`: categorías asociadas a cada título.
+- `dataset`: tabla inicial utilizada para importar y procesar los datos originales.
 
+Las tablas intermedias `shows_directores`, `shows_actores`, `shows_paises` y `shows_categorias` permiten representar relaciones de muchos a muchos.
 
+---
 
+## 2. Diagrama entidad-relación (E-R)
 
+El siguiente diagrama representa las tablas de la base de datos y sus relaciones.
+
+![Diagrama entidad-relación de la base de datos](Proyecto%20Final%20DER.png)
+
+---
+
+## 3. Código utilizado para la normalización
+
+La normalización se realizó mediante consultas SQL en MySQL. Primero se creó una tabla con los datos originales y después se distribuyó la información en tablas específicas, vinculadas mediante claves primarias y claves foráneas.
+
+### 3.1. Creación de la base de datos y tabla inicial
+
+```sql
+CREATE DATABASE proyectoFinalDB_v2;
+USE proyectoFinalDB_v2;
+
+CREATE TABLE dataset (
+    id_show INT AUTO_INCREMENT NOT NULL,
+    type TEXT,
+    title TEXT NOT NULL,
+    director TEXT,
+    `cast` TEXT,
+    country TEXT,
+    date_added TEXT,
+    release_year INT,
+    rating TEXT,
+    duration TEXT,
+    listed_in TEXT,
+    description TEXT,
+    PRIMARY KEY (id_show)
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4;
+```
+
+La tabla `dataset` conserva los campos del archivo original para facilitar la importación y el procesamiento de los registros.
+
+### 3.2. Separación de datos repetidos
+
+Se crearon tablas independientes para los tipos de contenido y las clasificaciones. Los valores únicos se obtuvieron con `SELECT DISTINCT`.
+
+```sql
+INSERT INTO tipos (tipo_de_show)
+SELECT DISTINCT type
+FROM dataset;
+
+INSERT INTO clasificaciones (clasificacion)
+SELECT DISTINCT rating
+FROM dataset
+WHERE rating <> ''
+  AND rating NOT LIKE '%min%';
+```
+
+### 3.3. Creación de relaciones
+
+Los campos originales de director, reparto, país y categoría pueden contener varios valores separados por comas. Para separar esos valores, se utilizaron consultas con `JSON_TABLE`, junto con `TRIM` y `DISTINCT`, y se insertaron los resultados en tablas individuales y tablas intermedias.
+
+Ejemplo de la relación entre títulos y directores:
+
+```sql
+INSERT INTO shows_directores (id_show, id_director)
+SELECT DISTINCT
+    d.id_show,
+    di.id_director
+FROM dataset AS d
+JOIN JSON_TABLE(
+    CONCAT(
+        '["',
+        REPLACE(REPLACE(d.director, '"', '\\"'), ', ', '","'),
+        '"]'
+    ),
+    '$[*]' COLUMNS (
+        nombre_director VARCHAR(100) PATH '$'
+    )
+) AS j
+JOIN directores AS di
+    ON di.nombre_director = TRIM(j.nombre_director)
+WHERE TRIM(d.director) <> ''
+  AND TRIM(j.nombre_director) <> '';
+```
+
+El mismo enfoque se utilizó para procesar actores, países y categorías, adaptando los nombres de los campos y las tablas.
+
+### 3.4. Claves y relaciones
+
+Las tablas se vincularon mediante claves primarias (`PRIMARY KEY`) y claves foráneas (`FOREIGN KEY`). En las tablas intermedias se utilizaron claves primarias compuestas por los identificadores de ambas entidades, para evitar duplicar una misma relación.
+
+### 3.5. Ajuste de fechas
+
+La fecha de incorporación se transformó al tipo `DATE`. Para ello, se convirtió el texto original con `STR_TO_DATE` y luego se modificó el tipo de la columna.
+
+```sql
+UPDATE shows
+SET fecha_aniadido = STR_TO_DATE(fecha_aniadido, '%M %d, %Y')
+WHERE fecha_aniadido IS NOT NULL
+  AND fecha_aniadido <> '';
+
+UPDATE shows
+SET fecha_aniadido = NULL
+WHERE fecha_aniadido = '';
+
+ALTER TABLE shows
+MODIFY fecha_aniadido DATE;
+```
+
+### 3.6. Compatibilidad al importar
+
+Durante la preparación del archivo SQL, se indicó reemplazar la intercalación `utf8mb4_0900_ai_ci` por `utf8mb4_unicode_ci` cuando el servidor MySQL de destino no admita la primera.
+
+---
+
+## 4. Consultas realizadas
+
+Durante el desarrollo se realizaron consultas para cargar los datos, revisar registros, detectar valores vacíos, contar elementos, comprobar relaciones y consultar la información ya normalizada.
+
+### 4.1. Consultar los registros originales
+
+```sql
+SELECT *
+FROM dataset;
+```
+
+### 4.2. Contar películas y series por tipo
+
+```sql
+SELECT COUNT(*) AS total, type
+FROM dataset
+GROUP BY type;
+```
+
+### 4.3. Consultar títulos con su tipo y clasificación
+
+```sql
+SELECT
+    s.id_show,
+    t.tipo_de_show,
+    s.titulo,
+    s.anio_salida,
+    c.clasificacion,
+    s.duracion
+FROM shows AS s
+LEFT JOIN tipos AS t
+    ON t.id_tipo = s.id_tipo
+LEFT JOIN clasificaciones AS c
+    ON c.id_clasificacion = s.id_clasificacion;
+```
+
+### 4.4. Buscar títulos con la fecha de incorporación más antigua
+
+```sql
+SELECT *
+FROM shows
+WHERE YEAR(fecha_aniadido) = (
+    SELECT MIN(YEAR(fecha_aniadido))
+    FROM shows
+);
+```
+
+### 4.5. Contar títulos por categoría
+
+```sql
+SELECT
+    ca.categoria,
+    COUNT(DISTINCT sc.id_show) AS total_titulos
+FROM categorias AS ca
+JOIN shows_categorias AS sc
+    ON sc.id_categoria = ca.id_categoria
+GROUP BY ca.categoria
+ORDER BY total_titulos DESC;
+```
+
+### 4.6. Comprobar relaciones faltantes con clasificaciones
+
+```sql
+SELECT
+    d.id_show,
+    d.rating
+FROM dataset AS d
+LEFT JOIN clasificaciones AS c
+    ON c.clasificacion = d.rating
+WHERE c.id_clasificacion IS NULL;
+```
+
+Además de estas consultas, se realizaron consultas de control para contar directores y actores, revisar valores vacíos, detectar nombres extensos y comprobar las relaciones de las tablas intermedias.
+
+---
+
+## 5. Vistas creadas
+
+Se crearon vistas SQL para simplificar consultas frecuentes y presentar información del catálogo sin tener que escribir nuevamente todas las relaciones entre tablas.
+
+| Vista | Descripción |
+|---|---|
+| `vista_catalogo_netflix` | Muestra los datos principales del catálogo: título, tipo, año, duración, clasificación y fecha de incorporación. |
+| `super_consulta` | Reúne información de títulos, directores, actores, países y categorías mediante varias relaciones. |
+| `super_consulta_2` | Presenta información similar a la consulta general, agrupando por separado los datos relacionados para reducir la multiplicación de filas producida por varias relaciones de muchos a muchos. |
+| `vista_titulos_categorias` | Relaciona cada título con sus categorías. |
+| `vista_titulos_paises` | Relaciona cada título con sus países asociados. |
+| `vista_estadisticas_anuales` | Agrupa los títulos por año de lanzamiento y tipo de contenido. |
+
+### Ejemplos de uso de las vistas
+
+**Buscar un título por nombre:**
+
+```sql
+SELECT *
+FROM vista_catalogo_netflix
+WHERE titulo LIKE '%Dark%';
+```
+
+**Consultar los títulos de una categoría:**
+
+```sql
+SELECT *
+FROM vista_titulos_categorias
+WHERE categoria = 'Documentaries'
+ORDER BY titulo;
+```
+
+**Consultar los títulos asociados a Argentina:**
+
+```sql
+SELECT *
+FROM vista_titulos_paises
+WHERE nombre_pais = 'Argentina'
+ORDER BY titulo;
+```
+
+**Consultar estadísticas por año y tipo:**
+
+```sql
+SELECT *
+FROM vista_estadisticas_anuales
+ORDER BY total_titulos DESC;
+```
+
+---
+
+## 6. Instrucciones para importar la base de datos
+
+La base de datos se puede importar utilizando **MySQL Workbench** o **HeidiSQL**. Antes de comenzar, hay que identificar el archivo `.sql` que contiene la creación y carga de las tablas. Si las vistas están en un archivo SQL separado, ese archivo debe ejecutarse después de crear las tablas.
+
+### 6.1. Importar con MySQL Workbench
+
+1. Abrir MySQL Workbench y conectarse al servidor MySQL.
+2. Ir a **File → Open SQL Script** y seleccionar el archivo SQL principal.
+3. Revisar que el script corresponda a la versión final del proyecto.
+4. Ejecutar el script con el botón del rayo.
+5. Actualizar el panel **Schemas** y comprobar que aparezca `proyectoFinalDB_v2`.
+6. Si las vistas se encuentran en otro archivo, abrir ese archivo y ejecutarlo después de importar las tablas.
+
+Para comprobar la importación, ejecutar:
+
+```sql
+USE proyectoFinalDB_v2;
+
+SHOW TABLES;
+SHOW FULL TABLES WHERE Table_type = 'VIEW';
+
+SELECT COUNT(*) AS total_registros
+FROM shows;
+
+SELECT *
+FROM vista_catalogo_netflix
+LIMIT 10;
+```
+
+### 6.2. Importar con HeidiSQL
+
+1. Abrir **HeidiSQL** y crear o seleccionar una sesión de conexión al servidor MySQL.
+2. Conectarse al servidor.
+3. Abrir una pestaña de consulta y cargar el archivo SQL principal. Según la versión de HeidiSQL, se puede utilizar **Archivo → Cargar archivo SQL** o abrir el archivo `.sql` desde el editor.
+4. Verificar que el archivo sea el script principal que crea la base de datos y las tablas.
+5. Ejecutar el script con el botón de ejecución (o la tecla de acceso rápido indicada por la versión).
+6. Esperar a que termine la ejecución y revisar la pestaña de mensajes para detectar posibles errores.
+7. Actualizar el árbol de bases de datos y comprobar que aparezca `proyectoFinalDB_v2` con sus tablas.
+8. Si las vistas están en un archivo separado, cargar y ejecutar ese archivo después de importar las tablas.
+9. Ejecutar las consultas de verificación que aparecen a continuación para comprobar que las tablas, vistas y registros estén disponibles.
+
+```sql
+USE proyectoFinalDB_v2;
+
+SHOW TABLES;
+SHOW FULL TABLES WHERE Table_type = 'VIEW';
+
+SELECT COUNT(*) AS total_registros
+FROM shows;
+
+SELECT *
+FROM vista_catalogo_netflix
+LIMIT 10;
+```
+
+
+### 6.3. Si se utiliza el CSV original
+
+Si el script incluye `LOAD DATA INFILE`, la ruta del archivo CSV debe existir en el equipo o servidor MySQL y el usuario debe tener permisos para leerla. En el script original se utilizó:
+
+```sql
+LOAD DATA INFILE '/var/lib/mysql-files/netflix_titles.csv'
+```
+
+Esa ruta corresponde a una configuración de servidor y puede no existir en Windows. Si se importa desde otro entorno, hay que adaptar la ruta o cargar el CSV mediante la herramienta de importación de datos. Si se entrega un respaldo SQL que ya contiene los datos, normalmente no será necesario volver a importar el CSV por separado.
+
+---
+
+## 7. Estructura del proyecto
+
+El proyecto está organizado en tres carpetas principales y los archivos de ejecución de la aplicación.
+
+```text
+ProyectoFinal/
+├── database/
+│   ├── proyectoFinalBD_v6.sql
+│   ├── Proyecto Final DER.png
+│   ├── netflix_titles.csv
+│   └── normalizacion/
+│       ├── actores.txt
+│       ├── directores.txt
+│       ├── ... otros archivos TXT de normalización
+│       └── ...
+├── static/
+│   └── estilos.css
+├── templates/
+│   └── index.html
+├── app.py
+├── requirements.txt
+└── README.md
+```
+
+### Descripción de las carpetas y archivos
+
+- **`database/`**: contiene los archivos relacionados con la base de datos: el script SQL, el dataset original y el diagrama entidad-relación. Dentro de esta carpeta hay una subcarpeta con archivos `.txt` que guardan las consultas utilizadas para normalizar las tablas, por ejemplo `actores.txt`, `directores.txt` y otros archivos similares.
+- **`static/`**: contiene los recursos estáticos de la aplicación. En este proyecto se encuentra `estilos.css`, que define la apariencia visual de la página.
+- **`templates/`**: contiene las plantillas HTML que utiliza Flask. El archivo `index.html` define la estructura de la página principal.
+- **`app.py`**: archivo principal de la aplicación Flask. Se encarga de iniciar el servidor y conectar la interfaz con la base de datos.
+- **`requirements.txt`**: lista las dependencias de Python necesarias para ejecutar el proyecto.
+- **`README.md`**: documento con la descripción del proyecto y las instrucciones de instalación e importación.
+
+### Instalación de dependencias y ejecución
+
+Con Python instalado, abrir una terminal en la carpeta principal del proyecto y ejecutar:
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+Después, abrir en el navegador la dirección local que indique Flask en la terminal.
